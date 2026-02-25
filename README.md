@@ -6,7 +6,8 @@ Learning project for building a Redis-compatible server in Java, step by step, b
 ## Current progress
 
 - [x] Step 1: Bind to port `6379` and accept TCP connections
-- [ ] Next: Implement `PING` -> `PONG`
+- [x] Step 2: Implement `PING` -> `PONG`
+- [ ] Next: Parse command-line args (like `--port`)
 
 ## Project structure
 
@@ -34,5 +35,5 @@ java -cp src/main/java Main
 
 ## Notes
 
-- The server currently accepts connections and closes them immediately.
-- Redis protocol handling is not implemented yet (that will be done in the next steps).
+- The server accepts RESP array commands and inline commands.
+- Implemented command: `PING` (responds with `+PONG\r\n`).

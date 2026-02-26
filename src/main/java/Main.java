@@ -15,7 +15,7 @@ public class Main {
     private static final byte[] UNKNOWN_COMMAND = "-ERR unknown command\r\n".getBytes(StandardCharsets.UTF_8);
 
     public static void main(String[] args) {
-        int port = 6379;
+        int port = parsePort(args);
 
         try (ServerSocket serverSocket = new ServerSocket()) {
             serverSocket.setReuseAddress(true);
@@ -23,11 +23,26 @@ public class Main {
 
             while (true) {
                 Socket client = serverSocket.accept();
-                handleClient(client);
+                Thread clientThread = new Thread(() -> handleClient(client));
+                clientThread.start();
             }
         } catch (IOException e) {
             System.out.println("Failed to bind to port " + port + ": " + e.getMessage());
         }
+    }
+
+    private static int parsePort(String[] args) {
+        int defaultPort = 6379;
+        for (int i = 0; i < args.length; i++) {
+            if ("--port".equals(args[i]) && i + 1 < args.length) {
+                try {
+                    return Integer.parseInt(args[i + 1]);
+                } catch (NumberFormatException ignored) {
+                    return defaultPort;
+                }
+            }
+        }
+        return defaultPort;
     }
 
     private static void handleClient(Socket client) {

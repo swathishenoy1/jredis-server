@@ -13,6 +13,8 @@ import java.util.List;
 public class Main {
     private static final byte[] PONG_RESPONSE = "+PONG\r\n".getBytes(StandardCharsets.UTF_8);
     private static final byte[] UNKNOWN_COMMAND = "-ERR unknown command\r\n".getBytes(StandardCharsets.UTF_8);
+    private static final byte[] ECHO_ARG_ERROR =
+            "-ERR wrong number of arguments for 'echo' command\r\n".getBytes(StandardCharsets.UTF_8);
 
     public static void main(String[] args) {
         int port = parsePort(args);
@@ -59,6 +61,12 @@ public class Main {
 
                 if (!command.isEmpty() && "PING".equalsIgnoreCase(command.get(0))) {
                     out.write(PONG_RESPONSE);
+                } else if (!command.isEmpty() && "ECHO".equalsIgnoreCase(command.get(0))) {
+                    if (command.size() < 2) {
+                        out.write(ECHO_ARG_ERROR);
+                    } else {
+                        out.write(bulkString(command.get(1)));
+                    }
                 } else {
                     out.write(UNKNOWN_COMMAND);
                 }
@@ -144,5 +152,18 @@ public class Main {
         if (in.read() != '\r' || in.read() != '\n') {
             throw new IOException("Expected CRLF");
         }
+    }
+
+    private static byte[] bulkString(String value) {
+        byte[] content = value.getBytes(StandardCharsets.UTF_8);
+        String header = "$" + content.length + "\r\n";
+        byte[] headerBytes = header.getBytes(StandardCharsets.UTF_8);
+        byte[] response = new byte[headerBytes.length + content.length + 2];
+
+        System.arraycopy(headerBytes, 0, response, 0, headerBytes.length);
+        System.arraycopy(content, 0, response, headerBytes.length, content.length);
+        response[response.length - 2] = '\r';
+        response[response.length - 1] = '\n';
+        return response;
     }
 }

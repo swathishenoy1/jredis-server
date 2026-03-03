@@ -9,12 +9,21 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Main {
     private static final byte[] PONG_RESPONSE = "+PONG\r\n".getBytes(StandardCharsets.UTF_8);
+    private static final byte[] OK_RESPONSE = "+OK\r\n".getBytes(StandardCharsets.UTF_8);
+    private static final byte[] NULL_BULK_STRING = "$-1\r\n".getBytes(StandardCharsets.UTF_8);
     private static final byte[] UNKNOWN_COMMAND = "-ERR unknown command\r\n".getBytes(StandardCharsets.UTF_8);
     private static final byte[] ECHO_ARG_ERROR =
             "-ERR wrong number of arguments for 'echo' command\r\n".getBytes(StandardCharsets.UTF_8);
+    private static final byte[] SET_ARG_ERROR =
+            "-ERR wrong number of arguments for 'set' command\r\n".getBytes(StandardCharsets.UTF_8);
+    private static final byte[] GET_ARG_ERROR =
+            "-ERR wrong number of arguments for 'get' command\r\n".getBytes(StandardCharsets.UTF_8);
+    private static final Map<String, String> STORE = new ConcurrentHashMap<>();
 
     public static void main(String[] args) {
         int port = parsePort(args);
@@ -66,6 +75,24 @@ public class Main {
                         out.write(ECHO_ARG_ERROR);
                     } else {
                         out.write(bulkString(command.get(1)));
+                    }
+                } else if (!command.isEmpty() && "SET".equalsIgnoreCase(command.get(0))) {
+                    if (command.size() < 3) {
+                        out.write(SET_ARG_ERROR);
+                    } else {
+                        STORE.put(command.get(1), command.get(2));
+                        out.write(OK_RESPONSE);
+                    }
+                } else if (!command.isEmpty() && "GET".equalsIgnoreCase(command.get(0))) {
+                    if (command.size() < 2) {
+                        out.write(GET_ARG_ERROR);
+                    } else {
+                        String value = STORE.get(command.get(1));
+                        if (value == null) {
+                            out.write(NULL_BULK_STRING);
+                        } else {
+                            out.write(bulkString(value));
+                        }
                     }
                 } else {
                     out.write(UNKNOWN_COMMAND);

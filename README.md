@@ -11,7 +11,8 @@ Learning project for building a Redis-compatible server in Java, step by step, b
 - [x] Step 4: Parse command-line args (`--port`)
 - [x] Step 5: Implement `ECHO`
 - [x] Step 6: Implement `SET` and `GET`
-- [ ] Next: Implement key expiry (`PX`)
+- [x] Step 7: Implement key expiry (`PX`)
+- [ ] Next: Implement `INFO replication`
 
 ## Project structure
 
@@ -49,5 +50,6 @@ java -cp src/main/java Main --port 6380
 - Implemented command: `PING` (responds with `+PONG\r\n`).
 - Implemented command: `ECHO` (responds with a bulk string).
 - Implemented commands: `SET` and `GET` (in-memory key-value store).
+- Implemented optional expiry on `SET` with `PX` (milliseconds).
 - Each client connection is handled in its own thread.
 - Server port is configurable via `--port`.

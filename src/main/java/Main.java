@@ -24,6 +24,7 @@ public class Main {
     private static final byte[] GET_ARG_ERROR =
             "-ERR wrong number of arguments for 'get' command\r\n".getBytes(StandardCharsets.UTF_8);
     private static final Map<String, String> STORE = new ConcurrentHashMap<>();
+    private static final Map<String, Long> EXPIRIES = new ConcurrentHashMap<>();
 
     public static void main(String[] args) {
         int port = parsePort(args);
@@ -80,14 +81,36 @@ public class Main {
                     if (command.size() < 3) {
                         out.write(SET_ARG_ERROR);
                     } else {
-                        STORE.put(command.get(1), command.get(2));
-                        out.write(OK_RESPONSE);
+                        String key = command.get(1);
+                        String value = command.get(2);
+                        if (command.size() == 3) {
+                            STORE.put(key, value);
+                            EXPIRIES.remove(key);
+                            out.write(OK_RESPONSE);
+                        } else if (command.size() == 5 && "PX".equalsIgnoreCase(command.get(3))) {
+                            try {
+                                long ttlMillis = Long.parseLong(command.get(4));
+                                STORE.put(key, value);
+                                EXPIRIES.put(key, System.currentTimeMillis() + ttlMillis);
+                                out.write(OK_RESPONSE);
+                            } catch (NumberFormatException e) {
+                                out.write(SET_ARG_ERROR);
+                            }
+                        } else {
+                            out.write(SET_ARG_ERROR);
+                        }
                     }
                 } else if (!command.isEmpty() && "GET".equalsIgnoreCase(command.get(0))) {
                     if (command.size() < 2) {
                         out.write(GET_ARG_ERROR);
                     } else {
-                        String value = STORE.get(command.get(1));
+                        String key = command.get(1);
+                        if (isExpired(key)) {
+                            STORE.remove(key);
+                            EXPIRIES.remove(key);
+                        }
+
+                        String value = STORE.get(key);
                         if (value == null) {
                             out.write(NULL_BULK_STRING);
                         } else {
@@ -192,5 +215,10 @@ public class Main {
         response[response.length - 2] = '\r';
         response[response.length - 1] = '\n';
         return response;
+    }
+
+    private static boolean isExpired(String key) {
+        Long expiry = EXPIRIES.get(key);
+        return expiry != null && System.currentTimeMillis() >= expiry;
     }
 }

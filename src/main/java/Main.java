@@ -25,6 +25,7 @@ public class Main {
             "-ERR wrong number of arguments for 'get' command\r\n".getBytes(StandardCharsets.UTF_8);
     private static final Map<String, String> STORE = new ConcurrentHashMap<>();
     private static final Map<String, Long> EXPIRIES = new ConcurrentHashMap<>();
+    private static final String MASTER_REPL_ID = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb";
 
     public static void main(String[] args) {
         int port = parsePort(args);
@@ -116,6 +117,12 @@ public class Main {
                         } else {
                             out.write(bulkString(value));
                         }
+                    }
+                } else if (!command.isEmpty() && "INFO".equalsIgnoreCase(command.get(0))) {
+                    if (command.size() == 1 || "replication".equalsIgnoreCase(command.get(1))) {
+                        out.write(bulkString(infoReplication()));
+                    } else {
+                        out.write(bulkString(""));
                     }
                 } else {
                     out.write(UNKNOWN_COMMAND);
@@ -220,5 +227,11 @@ public class Main {
     private static boolean isExpired(String key) {
         Long expiry = EXPIRIES.get(key);
         return expiry != null && System.currentTimeMillis() >= expiry;
+    }
+
+    private static String infoReplication() {
+        return "role:master\r\n"
+                + "master_replid:" + MASTER_REPL_ID + "\r\n"
+                + "master_repl_offset:0";
     }
 }

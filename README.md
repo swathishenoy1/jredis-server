@@ -12,7 +12,8 @@ Learning project for building a Redis-compatible server in Java, step by step, b
 - [x] Step 5: Implement `ECHO`
 - [x] Step 6: Implement `SET` and `GET`
 - [x] Step 7: Implement key expiry (`PX`)
-- [ ] Next: Implement `INFO replication`
+- [x] Step 8: Implement `INFO replication`
+- [ ] Next: Implement `REPLCONF`
 
 ## Project structure
 
@@ -51,5 +52,6 @@ java -cp src/main/java Main --port 6380
 - Implemented command: `ECHO` (responds with a bulk string).
 - Implemented commands: `SET` and `GET` (in-memory key-value store).
 - Implemented optional expiry on `SET` with `PX` (milliseconds).
+- Implemented `INFO replication` for master role metadata.
 - Each client connection is handled in its own thread.
 - Server port is configurable via `--port`.
